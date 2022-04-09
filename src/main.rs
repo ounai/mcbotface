@@ -1,45 +1,49 @@
 use std::env;
-
 use futures::StreamExt;
-use telegram_bot as tg;
 
-fn get_sender(message: &tg::types::Message) -> String {
-    match &message.from {
-        // @username
-        tg::User { username: Some(username), .. } =>
-            ["@".to_string(), username.to_string()].concat(),
+use telegram_bot::{
+    CanReplySendMessage,
+    Api,
+    UpdateKind,
+    MessageKind,
+    Error as TGError
+};
 
-        // firstname lastname
-        tg::User { first_name, last_name: Some(last_name), .. } =>
-            [first_name.to_string(), last_name.to_string()].join(" "),
+mod command;
+use command::Command;
 
-        // firstname
-        tg::User { first_name, .. } =>
-            first_name.to_string(),
+async fn handle_command(cmd: Command, api: &Api) -> Result<(), TGError> {
+    println!("{}", cmd);
+
+    if cmd.starts_with("/hello") {
+        api.send(cmd.get_message().text_reply("Hello!")).await?;
     }
+
+    Ok(())
 }
 
 #[tokio::main]
-async fn main() -> Result<(), tg::Error> {
+async fn main() -> Result<(), TGError> {
     let token = env::var("TG_BOT_TOKEN")
         .expect("Environment variable TG_BOT_TOKEN must be set!");
 
-    let api = tg::Api::new(token);
+    let api = Api::new(token);
     let mut stream = api.stream();
 
     while let Some(update) = stream.next().await {
         let update = update?;
 
-        if let tg::UpdateKind::Message(msg) = update.kind {
-            if let tg::MessageKind::Text { ref data, .. } = msg.kind {
-                let sender = get_sender(&msg);
+        if let UpdateKind::Message(message) = update.kind {
+            if let MessageKind::Text { ref data, .. } = message.kind {
+                if data.starts_with("/") {
+                    let text = data.to_string();
+                    let cmd = Command::new(message, text);
 
-                println!("<{}> {}", sender, data);
+                    handle_command(cmd, &api).await?;
+                }
             }
         }
     }
-
-    println!("Yes!");
 
     Ok(())
 }
