@@ -1,0 +1,9 @@
+[package]
+name = "mcbotface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+telegram-bot = "0.7"
+tokio = { version = "0.2", features = ["full"] }
+futures = "0.3"
