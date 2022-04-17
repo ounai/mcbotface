@@ -1,12 +1,33 @@
-use telegram_bot as tg;
+use std::{
+    env,
+    sync::{Arc, Mutex},
+};
 
-mod bot;
+use teloxide::prelude2::*;
+use lazy_static::lazy_static;
+
+mod scheduler;
+mod commands;
+mod catmate;
+
+use catmate::CatMateMessage;
 
 #[tokio::main]
-async fn main() -> Result<(), tg::Error> {
-    println!("Initializing...");
+async fn main() {
+    let chat_id = env::var("CHAT_ID")
+        .expect("CHAT_ID is not set")
+        .parse::<i64>()
+        .expect("CHAT_ID is not a number");
 
-    bot::run().await?;
+    println!("Initializing Telegram bot...");
 
-    Ok(())
+    lazy_static! {
+        static ref BOT: AutoSend<Bot> = Bot::from_env().auto_send();
+    }
+
+    // TODO load from file
+    let catmate_message = Arc::new(Mutex::new(CatMateMessage::new(chat_id)));
+
+    scheduler::init(&*BOT, catmate_message);
+    commands::listen(&*BOT).await
 }
