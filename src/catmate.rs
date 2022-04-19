@@ -1,10 +1,12 @@
 use teloxide::prelude2::*;
 use serde::{Serialize, Deserialize};
+use chrono::prelude::*;
 
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct CatMateMessage {
     chat_id: i64,
     sent: bool,
+    created_at: i64,
 }
 
 impl CatMateMessage {
@@ -12,6 +14,7 @@ impl CatMateMessage {
         Self {
             sent: false,
             chat_id,
+            created_at: Utc::now().timestamp(),
         }
     }
 
@@ -33,7 +36,13 @@ impl CatMateMessage {
             .expect(&format!("Could not send message to {}", self.chat_id.to_string()));
     }
 
+    pub fn get_datetime_string(&self) -> String {
+        let datetime = NaiveDateTime::from_timestamp(self.created_at, 0);
+
+        format!("{}", datetime.format("%Y-%m-%d %H:%M:%S"))
+    }
+
     fn get_text(&self) -> String {
-        "TODO message text body here".to_string()
+        format!("{} CatMate(tm)\n{:?}", self.get_datetime_string(), self)
     }
 }
