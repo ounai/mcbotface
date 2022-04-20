@@ -2,7 +2,7 @@ use teloxide::prelude2::*;
 use serde::{Serialize, Deserialize};
 use chrono::prelude::*;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CatMateMessage {
     chat_id: i64,
     sent: bool,
