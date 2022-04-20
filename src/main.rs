@@ -9,6 +9,7 @@ use lazy_static::lazy_static;
 mod scheduler;
 mod commands;
 mod catmate;
+mod tj;
 
 use catmate::CatMateMessage;
 

@@ -3,20 +3,10 @@ use std::error::Error;
 use teloxide::{
     prelude2::*,
     utils::command::BotCommand,
-    types::User,
+    types::{User, ParseMode},
 };
 
-use chrono::prelude::*;
-
-#[derive(BotCommand, Clone)]
-#[command(rename = "lowercase", description = "Supported commands:")]
-enum Command {
-    #[command(description = "send a hello message")]
-    Hello,
-
-    #[command(description = "count days to a date")]
-    Tj,
-}
+use crate::tj;
 
 trait GetSender {
     fn get_sender(&self) -> String;
@@ -40,21 +30,17 @@ impl GetSender for Message {
     }
 }
 
-fn get_hello(name: &str) -> String {
-    format!("Hello, {}!", name)
-}
+#[derive(BotCommand, Clone)]
+#[command(rename = "lowercase", description = "Supported commands:")]
+enum Command {
+    #[command(description = "send a hello message")]
+    Hello,
 
-fn get_days_until(date: &str) -> String {
-    let now = Utc::now();
+    #[command(description = "count days to a date")]
+    Tj,
 
-    let then = DateTime::parse_from_rfc3339(&[date, "T00:00:00+00:00"].concat())
-        .expect("Invalid date string");
-
-    let duration = then.signed_duration_since(now).to_std().unwrap();
-
-    let days = (duration.as_secs() / 60 / 60 / 24) + 1;
-
-    format!("{} days until {}", days, date)
+    #[command(description = "get a user & group id")]
+    Id,
 }
 
 async fn on_command(
@@ -64,12 +50,18 @@ async fn on_command(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     match command {
         Command::Hello =>
-            bot.send_message(message.chat.id, get_hello(&message.get_sender()))
+            bot.send_message(message.chat.id, format!("Hello, {}!", message.get_sender()))
                 .reply_to_message_id(message.id)
                 .await?,
 
         Command::Tj =>
-            bot.send_message(message.chat.id, get_days_until("2022-07-01"))
+            bot.send_message(message.chat.id, tj::get_days_until("2022-07-01"))
+                .reply_to_message_id(message.id)
+                .await?,
+
+        Command::Id =>
+            bot.send_message(message.chat.id, format!("user <code>{}</code>\ngroup <code>{}</code>", message.from().unwrap().id, message.chat.id))
+                .parse_mode(ParseMode::Html)
                 .reply_to_message_id(message.id)
                 .await?,
     };
