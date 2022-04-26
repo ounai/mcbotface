@@ -33,7 +33,7 @@ impl CatMateMessage {
     pub async fn send(&self, bot: &'static AutoSend<Bot>) {
         bot.send_message(self.chat_id, self.get_text())
             .await
-            .expect(&format!("Could not send message to {}", self.chat_id.to_string()));
+            .expect("Could not send catmate message");
     }
 
     pub fn get_datetime_string(&self) -> String {
